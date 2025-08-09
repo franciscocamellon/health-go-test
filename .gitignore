@@ -24,3 +24,4 @@ hs_err_pid*
 replay_pid*
 healthgo.data/teste_tecnico_healthgo.md
 healthgo.data/digital_medical_monitor_display.png
+healthgo.frontend/package-lock.json

@@ -4,9 +4,15 @@ import Grid from "@mui/material/Grid2";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import DownloadIcon from "@mui/icons-material/Download";
+import LogoutIcon from "@mui/icons-material/Logout";
 import PatientCard from "../components/PatientCard.jsx";
 import { useRealtimeMock } from "../hooks/useRealtimeMock.js";
+import { logout } from "../services/auth.js";
+import { useNavigate } from "react-router-dom";
+import { clearAuth } from "../services/authentication.js";
+import api from "../services/api.js";
 
 function mkInitialSeries(n = 40) {
   const base = { t: Date.now(), hr: 78, spo2: 98, sys: 121, dia: 79, temp: 36.6 };
@@ -25,6 +31,7 @@ function mkInitialSeries(n = 40) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [patients, setPatients] = useState(() => [
     { code: "PAC001", name: "João Silva", age: 65, alert: false, series: mkInitialSeries() },
     { code: "PAC002", name: "Maria Santos", age: 59, alert: true, series: mkInitialSeries() },
@@ -44,13 +51,27 @@ export default function Dashboard() {
     URL.revokeObjectURL(url);
   };
 
+  const onLogout = () => {
+    // fecha SSE se tiver
+    // closeSSE?.();
+
+    clearAuth();
+    delete api.defaults?.headers?.common?.Authorization; // se já setou em algum lugar global
+    navigate("/login", { replace: true });
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
         <Typography variant="h4">Multiparametric Monitoring</Typography>
-        <Button variant="contained" startIcon={<DownloadIcon />} onClick={onDownload}>
-          Download
-        </Button>
+        <Stack direction="row" spacing={3}>
+          <Button variant="contained" startIcon={<DownloadIcon />} onClick={onDownload}>
+            Download
+          </Button>
+          <Button variant="contained" onClick={onLogout}>
+            <LogoutIcon />
+          </Button>
+        </Stack>
       </Stack>
 
       <Grid container spacing={2}>

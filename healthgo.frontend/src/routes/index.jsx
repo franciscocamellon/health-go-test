@@ -2,8 +2,7 @@ import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } 
 
 import { isAuthenticated, handleVerificationProtected } from "../services/authentication";
 import Dashboard from "../pages/Dashboard";
-import Protected from "./ProtectedRoute";
-import LogIn from "../pages/Login";
+import LogIn from "../pages/LogIn";
 
 const router = createBrowserRouter(
   createRoutesFromElements(

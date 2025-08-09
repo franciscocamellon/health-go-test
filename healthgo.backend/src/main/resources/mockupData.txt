@@ -1,0 +1,2 @@
+doctor;medico;medico
+visitor;visitante;visitante

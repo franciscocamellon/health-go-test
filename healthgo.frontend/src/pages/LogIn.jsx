@@ -60,6 +60,15 @@ export default function LogIn() {
               {loading ? <CircularProgress size={22} /> : "Login"}
             </Button>
           </Box>
+          <Box mt={2}>
+            <Typography variant="body2" mb={2}>
+              Para acesso como médico utilize username: <strong>medico</strong> e senha: <strong>medico</strong>
+            </Typography>
+            <Typography variant="body2" mb={2}>
+              Para acesso como visitante utilize username: <strong>visitante</strong> e senha:{" "}
+              <strong>visitante</strong>
+            </Typography>
+          </Box>
         </CardContent>
       </Card>
     </Box>

@@ -156,21 +156,6 @@ curl -X POST http://localhost:8080/api/v1/patients/ingest   -H "Authorization: B
 
 ---
 
-## Qualidade & Dev Experience
-
-### Testes
-
-- **Backend:** `mvn test`
-- **Frontend:** `npm test` (se configurado)
-
-### Convenções
-
-- **Commits:** Conventional Commits (`feat:`, `fix:`, `chore:`…)
-- **Estilo:** Linter/Hooks (recomendado: **Spotless** no Java, **ESLint/Prettier** no front)
-- **Branches:** `main` (estável), `dev` (integração), `feature/*` (novas features)
-
----
-
 ## Segurança & LGPD
 
 - Autenticação **JWT** com expiração curta e refresh (se habilitado)

@@ -22,18 +22,18 @@ public class Patient {
     @Column(nullable = false)
     private String patientId; // e.g., PAC001
 
-    @Column(nullable = false)
-    private String fullName; // e.g., João Silva
+    @Column(name = "full_name_enc", nullable = false, columnDefinition = "text")
+    private String fullNameEnc;
 
-    @Column(nullable = false, unique = true)
-    private String cpf; // Brazilian document, will be encrypted
+    @Column(name = "cpf_enc", nullable = false, columnDefinition = "text", unique = true)
+    private String cpfEnc;
 
     // Vital signs
     @Column(nullable = false)
     private Integer heartRate; // bpm
 
     @Column(nullable = false)
-    private Integer spo2; // O₂ saturation (%)
+    private Double spo2; // O₂ saturation (%)
 
     @Column(nullable = false)
     private Integer systolicPressure; // mmHg
@@ -45,7 +45,7 @@ public class Patient {
     private Double temperature; // °C
 
     @Column(nullable = false)
-    private Integer respiratoryRate; // rpm
+    private Double respiratoryRate; // rpm
 
     @Column(nullable = false)
     private String status; // NORMAL or ALERT
@@ -53,16 +53,12 @@ public class Patient {
     @Column(nullable = false)
     private LocalDateTime timestamp; // data collection time
 
-    // Utility for VISITOR role to show only initials
-    public String getInitials() {
-        if (fullName == null || fullName.isBlank()) {
-            return "";
-        }
+    @Transient
+    public String initialsFromDecrypted(String fullName) {
+        if (fullName == null || fullName.isBlank()) return "—";
         String[] parts = fullName.trim().split("\\s+");
-        StringBuilder initials = new StringBuilder();
-        for (String part : parts) {
-            initials.append(part.charAt(0));
-        }
-        return initials.toString().toUpperCase();
+        String f = parts[0].substring(0,1).toUpperCase();
+        String l = parts.length > 1 ? parts[parts.length-1].substring(0,1).toUpperCase() : "";
+        return l.isBlank() ? (f + ".") : (f + ". " + l + ".");
     }
 }

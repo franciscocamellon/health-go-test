@@ -17,7 +17,7 @@ public class VitalIngestRequest {
     private Integer heartRate;      // hr
 
     @NotNull
-    private Integer spo2;
+    private Double spo2;
 
     @NotNull
     private Integer systolicPressure;
@@ -29,7 +29,7 @@ public class VitalIngestRequest {
     private Double temperature;
 
     @NotNull
-    private Integer respiratoryRate;
+    private Double respiratoryRate;
 
     @NotBlank
     private String status;         // NORMAL | ALERT

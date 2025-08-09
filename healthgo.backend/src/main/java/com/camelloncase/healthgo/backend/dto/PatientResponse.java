@@ -10,11 +10,11 @@ public record PatientResponse(
         String patientId,
         String displayName,           // fullName (doctor) OU iniciais (visitor)
         Integer heartRate,
-        Integer spo2,
+        Double spo2,
         Integer systolicPressure,
         Integer diastolicPressure,
         Double temperature,
-        Integer respiratoryRate,
+        Double respiratoryRate,
         String status,
         LocalDateTime timestamp
 ) {}

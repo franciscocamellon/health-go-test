@@ -1,6 +1,7 @@
 package com.camelloncase.healthgo.backend.security.configuration;
 
 import com.camelloncase.healthgo.backend.security.jwt.JwtRequestFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -41,12 +42,29 @@ public class WebSecurityConfig {
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(requests -> requests
-                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll() // Permitir swagger
                     .requestMatchers("/auth/**",  "/auth/signup").permitAll() // Permitir sem autenticação
-                    .requestMatchers("/api/v1/patients/stream").hasAnyRole("DOCTOR","VISITOR")
-                    .requestMatchers("/api/v1/patients/**").hasRole("DOCTOR") // criar/ingest restritos ao médico
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll() // Permitir swagger
+
+//                    .requestMatchers("/api/v1/patients/stream", "/api/v1/patients").hasAnyRole("DOCTOR","VISITOR")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/patients/stream").hasAnyRole("DOCTOR","VISITOR")
+                    .requestMatchers(HttpMethod.POST, "/api/v1/patients", "/api/v1/patients/ingest").hasRole("DOCTOR")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/patients/**").hasAnyRole("DOCTOR","VISITOR")
+                    .requestMatchers("/error", "/error/**").permitAll()
                     .anyRequest().authenticated() // Requer autenticação
             );
+
+        http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> {
+                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    res.setContentType("application/json");
+                    res.getWriter().write("{\"error\":\"unauthorized\"}");
+                })
+                .accessDeniedHandler((req, res, e) -> {
+                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    res.setContentType("application/json");
+                    res.getWriter().write("{\"error\":\"forbidden\"}");
+                })
+        );
 
         return http.build();
     }

@@ -4,6 +4,6 @@ import java.time.LocalDateTime;
 
 public record PatientUpdateEvent(
         Long id, String patientId,
-        Integer heartRate, Integer spo2, Integer systolicPressure, Integer diastolicPressure,
-        Double temperature, Integer respiratoryRate, String status, LocalDateTime timestamp
+        Integer heartRate, Double spo2, Integer systolicPressure, Integer diastolicPressure,
+        Double temperature, Double respiratoryRate, String status, LocalDateTime timestamp
 ) {}

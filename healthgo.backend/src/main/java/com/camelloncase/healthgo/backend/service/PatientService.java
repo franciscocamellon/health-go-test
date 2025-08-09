@@ -22,11 +22,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+
 @Service
 @RequiredArgsConstructor
 public class PatientService {
 
     private final PatientRepository patientRepository;
+    private final EncryptionService encryptionService;
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     public SseEmitter subscribe() {
@@ -53,66 +55,83 @@ public class PatientService {
     }
 
     // ---------- Commands ----------
-    public Patient create(PatientRequest req) {
-        if (patientRepository.findByPatientId(req.getPatientId()).isPresent()) {
+    public Patient create(PatientRequest patientRequest) {
+
+        if (patientRepository.findByPatientId(patientRequest.getPatientId()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "patientId already exists");
         }
-        Patient p = Patient.builder()
-                .patientId(req.getPatientId())
-                .fullName(req.getFullName())
-                .cpf(req.getCpf())
+
+        String cpfNorm = patientRequest.getCpf() == null ? null : patientRequest.getCpf().replaceAll("\\D+", "");
+        String fullNameEnc = encryptionService.encrypt(patientRequest.getFullName());
+        String cpfEnc = encryptionService.encrypt(cpfNorm);
+
+        Patient newPatient = Patient.builder()
+                .patientId(patientRequest.getPatientId())
+                .fullNameEnc(fullNameEnc)
+                .cpfEnc(cpfEnc)
                 // snapshot default
-                .heartRate(0).spo2(0)
-                .systolicPressure(0).diastolicPressure(0)
-                .temperature(0.0).respiratoryRate(0)
+                .heartRate(0)
+                .spo2(0.0)
+                .systolicPressure(0)
+                .diastolicPressure(0)
+                .temperature(0.0)
+                .respiratoryRate(0.0)
                 .status("NORMAL")
                 .timestamp(LocalDateTime.now())
                 .build();
-        return patientRepository.save(p);
+
+        return patientRepository.save(newPatient);
     }
 
-    public void ingest(VitalIngestRequest req) {
-        Patient p = patientRepository.findByPatientId(req.getPatientId())
+    public void ingest(VitalIngestRequest ingestRequest) {
+        Patient observedPatient = patientRepository.findByPatientId(ingestRequest.getPatientId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "patient not found"));
 
-        LocalDateTime ts = normalizeTimestamp(req.getTimestamp());
+        LocalDateTime ts = normalizeTimestamp(ingestRequest.getTimestamp());
 
-        p.setHeartRate(req.getHeartRate());
-        p.setSpo2(req.getSpo2());
-        p.setSystolicPressure(req.getSystolicPressure());
-        p.setDiastolicPressure(req.getDiastolicPressure());
-        p.setTemperature(req.getTemperature());
-        p.setRespiratoryRate(req.getRespiratoryRate());
-        p.setStatus(req.getStatus());
-        p.setTimestamp(ts);
+        observedPatient.setHeartRate(ingestRequest.getHeartRate());
+        observedPatient.setSpo2(ingestRequest.getSpo2());
+        observedPatient.setSystolicPressure(ingestRequest.getSystolicPressure());
+        observedPatient.setDiastolicPressure(ingestRequest.getDiastolicPressure());
+        observedPatient.setTemperature(ingestRequest.getTemperature());
+        observedPatient.setRespiratoryRate(ingestRequest.getRespiratoryRate());
+        observedPatient.setStatus(ingestRequest.getStatus());
+        observedPatient.setTimestamp(ts);
 
-        patientRepository.save(p);
+        patientRepository.save(observedPatient);
 
-        var payload = new PatientUpdateEvent(p.getId(), p.getPatientId(), p.getHeartRate(),
-                p.getSpo2(), p.getSystolicPressure(), p.getDiastolicPressure(),
-                p.getTemperature(), p.getRespiratoryRate(), p.getStatus(), p.getTimestamp());
+        var payload = new PatientUpdateEvent(observedPatient.getId(), observedPatient.getPatientId(), observedPatient.getHeartRate(),
+                observedPatient.getSpo2(), observedPatient.getSystolicPressure(), observedPatient.getDiastolicPressure(),
+                observedPatient.getTemperature(), observedPatient.getRespiratoryRate(), observedPatient.getStatus(), observedPatient.getTimestamp());
 
         broadcast(payload);
     }
 
     // ---------- Queries ----------
-    public List<PatientResponse> list(Authentication auth) {
-        boolean doctor = hasRole(auth, "DOCTOR");
+    public List<PatientResponse> list(Authentication authentication) {
+        boolean doctor = hasRole(authentication, "DOCTOR");
         return patientRepository.findAll().stream()
-                .map(p -> toResponse(p, doctor))
+                .map(p -> mapToResponse(p, doctor))
                 .toList();
     }
 
-    public PatientResponse getOne(Long id, Authentication auth) {
-        boolean doctor = hasRole(auth, "DOCTOR");
+    public PatientResponse getOne(Long id, Authentication authentication) {
+        boolean doctor = hasRole(authentication, "DOCTOR");
         Patient p = patientRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return toResponse(p, doctor);
+        return mapToResponse(p, doctor);
     }
 
     // ---------- Mapping / helpers ----------
-    private PatientResponse toResponse(Patient p, boolean doctor) {
-        String display = doctor ? p.getFullName() : p.getInitials();
+    private PatientResponse mapToResponse(Patient p, boolean doctor) {
+        String fullName;
+        try {
+            fullName = encryptionService.decrypt(p.getFullNameEnc());
+        } catch (Exception e) {
+            fullName = "—";
+        }
+        String display = doctor ? fullName : p.initialsFromDecrypted(fullName);
+
         return PatientResponse.builder()
                 .id(p.getId())
                 .patientId(p.getPatientId())
@@ -128,8 +147,8 @@ public class PatientService {
                 .build();
     }
 
-    private boolean hasRole(Authentication auth, String role) {
-        return auth != null && auth.getAuthorities().stream()
+    private boolean hasRole(Authentication authentication, String role) {
+        return authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + role));
     }
 

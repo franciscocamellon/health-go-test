@@ -27,28 +27,30 @@ public class PatientController {
     @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Patient create(@RequestBody @Valid PatientRequest req) {
-        return patientService.create(req);
+    public Patient create(@RequestBody @Valid PatientRequest patientRequest) {
+        return patientService.create(patientRequest);
     }
 
     // ---- Ingest de vitais (sem PII). Por padrão deixei DOCTOR; ajuste se for o simulador técnico.
     @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping("/ingest")
     @ResponseStatus(HttpStatus.OK)
-    public void ingest(@RequestBody @Valid VitalIngestRequest req) {
-        patientService.ingest(req);
+    public void ingest(@RequestBody @Valid VitalIngestRequest ingestRequest) {
+        patientService.ingest(ingestRequest);
     }
 
     // ---- Lista para dashboard (LGPD aplicado no service)
     @GetMapping
-    public List<PatientResponse> list(Authentication auth) {
-        return patientService.list(auth);
+    @PreAuthorize("hasAnyRole('DOCTOR','VISITOR')")
+    public List<PatientResponse> list(Authentication authentication) {
+        return patientService.list(authentication);
     }
 
     // ---- Detalhe (LGPD aplicado no service)
     @GetMapping("/{id}")
-    public PatientResponse getOne(@PathVariable Long id, Authentication auth) {
-        return patientService.getOne(id, auth);
+    @PreAuthorize("hasAnyRole('DOCTOR','VISITOR')")
+    public PatientResponse getOne(@PathVariable Long id, Authentication authentication) {
+        return patientService.getOne(id, authentication);
     }
 
     // Stream SSE (médico e visitante podem ouvir)

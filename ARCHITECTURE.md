@@ -16,7 +16,7 @@ A arquitetura segue princípios de **Domain-Driven Design (DDD)** e **Clean Arch
 - **Banco de Dados**: PostgreSQL (estrutura normalizada, índices para consultas por `patient_id` e `timestamp`)
 - **Persistência**: Hibernate/JPA
 - **Segurança**:
-  - Spring Security com roles (`ROLE_DOCTOR`, `ROLE_ADMIN`)
+  - Spring Security com roles (`ROLE_DOCTOR`, `ROLE_VISITOR`)
   - Filtragem de campos sensíveis no retorno
   - CORS configurado para permitir apenas origens confiáveis
 - **Logs & Auditoria**: SLF4J + Logback, com rastreamento de requisições e exclusão de PII nos logs

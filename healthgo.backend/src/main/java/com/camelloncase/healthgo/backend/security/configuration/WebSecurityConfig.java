@@ -3,6 +3,7 @@ package com.camelloncase.healthgo.backend.security.configuration;
 import com.camelloncase.healthgo.backend.security.jwt.JwtRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -42,6 +43,8 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(requests -> requests
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll() // Permitir swagger
                     .requestMatchers("/auth/**",  "/auth/signup").permitAll() // Permitir sem autenticação
+                    .requestMatchers("/api/v1/patients/stream").hasAnyRole("DOCTOR","VISITOR")
+                    .requestMatchers("/api/v1/patients/**").hasRole("DOCTOR") // criar/ingest restritos ao médico
                     .anyRequest().authenticated() // Requer autenticação
             );
 
@@ -62,7 +65,7 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

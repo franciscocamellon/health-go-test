@@ -5,9 +5,9 @@
 
 ## Estrutura
 - `docker-compose.yml` — orquestra Postgres, Backend, Frontend e (opcional) Desktop.
-- `backend/Dockerfile` — build/run do Spring Boot.
-- `frontend/Dockerfile` + `nginx.conf` — build do Vite e serve com NGINX (proxy /api).
-- `desktop/Dockerfile` — build/run do cliente desktop (leitura de CSV).
+- `healthgo.backend/Dockerfile` — build/run do Spring Boot.
+- `healthgo.frontend/Dockerfile` + `nginx.conf` — build do Vite e serve com NGINX (proxy /api).
+- `healthgo.desktop/Dockerfile` — build/run do cliente desktop (leitura de CSV).
 
 ## Como usar
 1. Coloque seus `.csv` em `./csv/` (será montado no container do desktop em `/data`).

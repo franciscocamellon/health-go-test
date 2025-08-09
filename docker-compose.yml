@@ -1,0 +1,67 @@
+services:
+  db:
+    image: postgres:16
+    container_name: healthgo-postgres
+    environment:
+      POSTGRES_DB: health-go
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432" # host:container (matches your local 5433 if desired)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d health-go"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../health-go-test/healthgo.backend
+      dockerfile: ./Dockerfile
+    container_name: healthgo-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/health-go
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_OPEN_IN_VIEW: "false"
+      # Optional JWT/envs here (add if your app uses them)
+      # APP_SECURITY_JWT_SECRET: change_me
+      # APP_SECURITY_JWT_EXPIRATION_MINUTES: 15
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../health-go-test/healthgo.frontend
+      dockerfile: ./Dockerfile
+      args:
+        # The app will call /api (nginx proxies to backend)
+        VITE_API_URL: /api
+    container_name: healthgo-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  desktop:
+    build:
+      context: ../health-go-test/healthgo.desktop
+      dockerfile: ./Dockerfile
+    container_name: healthgo-desktop
+    environment:
+      BACKEND_URL: http://backend:8080
+    volumes:
+      - ./csv:/data
+    depends_on:
+      - backend
+    # Uncomment to auto-start in production; keep commented if you run it on-demand
+    # restart: unless-stopped
+
+volumes:
+  db_data:
